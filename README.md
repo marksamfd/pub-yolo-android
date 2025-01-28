@@ -1,6 +1,21 @@
-# TensorFlow Lite Object Detection Android Demo
+# TensorFlow Lite Object Detection Android Demo + YOLOv11
+
+For detailed explanation see [this post](https://medium.com/p/6b7514556185).
+
 
 ### Overview
+
+This application was adapted using code from:
+- [TensorFlow Lite Object Detection Android Demo](https://github.com/tensorflow/examples/tree/master/lite/examples/object_detection/android), and
+- [Ultralytics Flutter demo app](https://github.com/ultralytics/yolo-flutter-app)
+
+### Licences
+Original TensorFlow Lite Object Detection Android Demo has [Apache License 2.0](LICENSE-Apache2.0.txt), while Ultralytics has [GNU GENERAL PUBLIC LICENSE](LICENSE).
+So in case of using this code you must complain both licences.
+
+
+
+### Application
 
 This is a camera app that continuously detects the objects (bounding boxes and
 classes) in the frames seen by your device's back camera, with the option to use
@@ -19,9 +34,9 @@ explicitly.
 
 This application should be run on a physical Android device.
 
-![App example showing UI controls. Highlights a cat](https://storage.googleapis.com/download.tensorflow.org/tflite/examples/obj_detection_cat.gif)
+![App example showing UI controls. Highlights a cat](pub/cat.gif)
 
-![App example showing UI controls. Highlights a cat, a book, and a couch.](screenshot1.png)
+![App example showing UI controls. Highlights a cat](pub/cat.jpeg)
 
 
 ## Build the demo using Android Studio
