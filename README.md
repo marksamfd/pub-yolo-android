@@ -2,6 +2,10 @@
 
 For detailed explanation see [this post](https://medium.com/p/6b7514556185).
 
+![App example showing UI controls. Highlights a cat](pub/cat.jpeg)
+
+![App example showing UI controls. Highlights a cat](pub/dog.gif)
+
 
 ### Overview
 
@@ -35,8 +39,6 @@ explicitly.
 This application should be run on a physical Android device.
 
 ![App example showing UI controls. Highlights a cat](pub/cat.gif)
-
-![App example showing UI controls. Highlights a cat](pub/cat.jpeg)
 
 
 ## Build the demo using Android Studio
