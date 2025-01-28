@@ -65,7 +65,4 @@ This application should be run on a physical Android device.
 *   With your Android device connected to your computer and developer mode
     enabled, click on the green Run arrow in Android Studio.
 
-### Models used
 
-Downloading, extraction, and placing the models into the assets folder is
-managed automatically by the download.gradle file.
