@@ -132,62 +132,13 @@ public class TfliteDetector extends Detector {
     }
 
 
-    private Bitmap rgbBitmap = null;
-    private TensorImage tensorImage = null;
-    private TensorImage tensorImage2 = null;
-
-    private ImageProcessor imageProcessor = null;
-    public TensorImage preprocessOptim(Bitmap bitmap) {
-
-        if (rgbBitmap == null) {
-
-            rgbBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.RGB_565);
-
-            tensorImage = new TensorImage(DataType.FLOAT32);
-            tensorImage2 = new TensorImage(DataType.FLOAT32);
-
-            imageProcessor = new ImageProcessor.Builder()
-                    .add(new ResizeOp(INPUT_SIZE, INPUT_SIZE, ResizeOp.ResizeMethod.BILINEAR))
-                    .add(new NormalizeOp(0.0f, 255.0f)) // Normalize RGB values to [0, 1]
-                    .build();
-        }
-
-        // 1. converts ARGB to RGB
-        Canvas canvas = new Canvas(rgbBitmap);
-        Paint paint = new Paint();
-        canvas.drawBitmap(bitmap, 0, 0, paint);
-
-        // 2. process the image, normalizing between 0 and 1.
-        tensorImage.load(rgbBitmap);
-
-        tensorImage2 = imageProcessor.process(tensorImage);
-
-        return tensorImage2;
-
-    }
-
-    public ArrayList<DetectedObject> predictOptim(TensorImage tensorImage) {
-        try {
-
-            long startTime = System.nanoTime();
-
-            imgData.rewind();
-            imgData.put(tensorImage.getBuffer());
-
-            stats.imageSetupTime = (System.nanoTime() - startTime) * Nanos2Millis;
-
-            return runInference();
-        } catch (Exception e) {
-            return new ArrayList<>(); //float[0][];
-        }
-    }
 
     @Override
     public ArrayList<DetectedObject> predict(Bitmap bitmap) {
         try {
 
             long startTime = System.nanoTime();
-            // setInputOK(bitmap);
+            // setInput(bitmap);
             setInputOptim(bitmap);
             stats.imageSetupTime = (System.nanoTime() - startTime) * Nanos2Millis;
 
@@ -265,47 +216,33 @@ public class TfliteDetector extends Detector {
         output = new float[outputShape2][outputShape3];
     }
 
+    private void setInput(Bitmap resizedbitmap) {
+        ByteBuffer imgData = ByteBuffer.allocateDirect(1 * INPUT_SIZE * INPUT_SIZE * 3 * NUM_BYTES_PER_CHANNEL);
+        int[] intValues = new int[INPUT_SIZE * INPUT_SIZE];
 
+        resizedbitmap.getPixels(intValues, 0, resizedbitmap.getWidth(), 0, 0, resizedbitmap.getWidth(), resizedbitmap.getHeight());
 
-//    private void setInput(Bitmap resizedbitmap) {
-//        ByteBuffer imgData = ByteBuffer.allocateDirect(1 * INPUT_SIZE * INPUT_SIZE * 3 * NUM_BYTES_PER_CHANNEL);
-//        int[] intValues = new int[INPUT_SIZE * INPUT_SIZE];
-//
-//        resizedbitmap.getPixels(intValues, 0, resizedbitmap.getWidth(), 0, 0, resizedbitmap.getWidth(), resizedbitmap.getHeight());
-//
-//        imgData.order(ByteOrder.nativeOrder());
-//        imgData.rewind();
-//        for (int i = 0; i < INPUT_SIZE; ++i) {
-//            for (int j = 0; j < INPUT_SIZE; ++j) {
-//                int pixelValue = intValues[i * INPUT_SIZE + j];
-//                float r = (((pixelValue >> 16) & 0xFF)) / 255.0f;
-//                float g = (((pixelValue >> 8) & 0xFF)) / 255.0f;
-//                float b = ((pixelValue & 0xFF)) / 255.0f;
-//                imgData.putFloat(r);
-//                imgData.putFloat(g);
-//                imgData.putFloat(b);
-//            }
-//        }
-//        this.inputArray = new Object[]{imgData};
-//        this.outputMap = new HashMap<>();
-//        ByteBuffer outData = ByteBuffer.allocateDirect(outputShape2 * outputShape3 * NUM_BYTES_PER_CHANNEL);
-//        outData.order(ByteOrder.nativeOrder());
-//        outData.rewind();
-//        outputMap.put(0, outData);
-//    }
+        imgData.order(ByteOrder.nativeOrder());
+        imgData.rewind();
+        for (int i = 0; i < INPUT_SIZE; ++i) {
+            for (int j = 0; j < INPUT_SIZE; ++j) {
+                int pixelValue = intValues[i * INPUT_SIZE + j];
+                float r = (((pixelValue >> 16) & 0xFF)) / 255.0f;
+                float g = (((pixelValue >> 8) & 0xFF)) / 255.0f;
+                float b = ((pixelValue & 0xFF)) / 255.0f;
+                imgData.putFloat(r);
+                imgData.putFloat(g);
+                imgData.putFloat(b);
+            }
+        }
+        this.inputArray = new Object[]{imgData};
+        this.outputMap = new HashMap<>();
+        ByteBuffer outData = ByteBuffer.allocateDirect(outputShape2 * outputShape3 * NUM_BYTES_PER_CHANNEL);
+        outData.order(ByteOrder.nativeOrder());
+        outData.rewind();
+        outputMap.put(0, outData);
+    }
 
-//    private void initBuffers() {
-//        imgData = ByteBuffer.allocateDirect(1 * INPUT_SIZE * INPUT_SIZE * 3 * NUM_BYTES_PER_CHANNEL);
-//        imgData.order(ByteOrder.nativeOrder());
-//        intValues = new int[INPUT_SIZE * INPUT_SIZE];
-//
-//        outData = ByteBuffer.allocateDirect(outputShape2 * outputShape3 * NUM_BYTES_PER_CHANNEL);
-//        outData.order(ByteOrder.nativeOrder());
-//
-//        pixelBuffer = ByteBuffer.allocateDirect(INPUT_SIZE * INPUT_SIZE * 4); // RGBA
-//        pixelBuffer.order(ByteOrder.nativeOrder());
-//
-//    }
 
     private void setInputOptim(Bitmap bitmap) {
 
@@ -344,26 +281,6 @@ public class TfliteDetector extends Detector {
         outputMap.put(0, outData);
 
     }
-
-
-//    private void setInput(Bitmap resizedbitmap) {
-//
-//        if (imgData == null) {
-//            initBuffers();
-//        }
-//
-//        TensorImage tensorImage = new TensorImage(DataType.FLOAT32);
-//        tensorImage.load(resizedbitmap); // Load the bitmap into TensorImage
-//        ByteBuffer buffer = tensorImage.getTensorBuffer().getBuffer();
-//
-//        imgData.rewind();
-//        imgData.put(buffer);
-//
-//        this.inputArray = new Object[]{imgData};
-//        this.outputMap = new HashMap<>();
-//        outData.rewind();
-//        outputMap.put(0, outData);
-//    }
 
 
 
