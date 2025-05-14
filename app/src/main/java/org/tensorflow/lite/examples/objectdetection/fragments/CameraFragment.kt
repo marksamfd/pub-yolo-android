@@ -19,6 +19,8 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.speech.tts.Voice
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -36,17 +38,21 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import org.tensorflow.lite.examples.objectdetection.ObjectDetectorHelper
 import org.tensorflow.lite.examples.objectdetection.R
 import org.tensorflow.lite.examples.objectdetection.databinding.FragmentCameraBinding
 import org.tensorflow.lite.examples.objectdetection.detectors.ObjectDetection
 import java.util.LinkedList
+import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import com.ultralytics.yolo.predict.detect.PostProcessUtils.IOU
+import kotlin.math.max
 
 class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
 
     private val TAG = "ObjectDetection"
+
 
     private var _fragmentCameraBinding: FragmentCameraBinding? = null
 
@@ -59,6 +65,10 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
     private var cameraProvider: ProcessCameraProvider? = null
+    private var tts: TextToSpeech? = null
+    private var frameNum: Int = 0
+    private val FRAME_DROP_TTS = 10
+
 
     /** Blocking camera operations are performed using this executor */
     private lateinit var cameraExecutor: ExecutorService
@@ -87,6 +97,23 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
       savedInstanceState: Bundle?
     ): View {
         _fragmentCameraBinding = FragmentCameraBinding.inflate(inflater, container, false)
+        tts = TextToSpeech(
+            requireContext()
+        ) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                // TTS engine is successfully initialized.
+                val desiredLocale: Locale = Locale.US // Change to the desired language/locale
+                tts!!.setLanguage(desiredLocale)
+
+                val voices: Set<Voice> = tts!!.voices
+                val voiceList: List<Voice> = ArrayList(voices)
+                val selectedVoice: Voice = voiceList[0] // Change to the desired voice index
+                tts!!.setVoice(selectedVoice)
+            } else {
+                // Failed to initialize TTS engine.
+                Toast.makeText(requireContext(), "Failed to initialize TTS engine", Toast.LENGTH_LONG).show()
+            }
+        }
 
         return fragmentCameraBinding.root
     }
@@ -164,7 +191,7 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
 
         // When clicked, change the underlying hardware used for inference. Current options are CPU
         // GPU, and NNAPI
-        fragmentCameraBinding.bottomSheetLayout.spinnerDelegate.setSelection(0, false)
+        fragmentCameraBinding.bottomSheetLayout.spinnerDelegate.setSelection(1, false)
         fragmentCameraBinding.bottomSheetLayout.spinnerDelegate.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
@@ -178,7 +205,7 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
             }
 
         // When clicked, change the underlying model used for object detection
-        fragmentCameraBinding.bottomSheetLayout.spinnerModel.setSelection(0, false)
+       /* fragmentCameraBinding.bottomSheetLayout.spinnerModel.setSelection(4, false)
         fragmentCameraBinding.bottomSheetLayout.spinnerModel.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
@@ -187,9 +214,9 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                 }
 
                 override fun onNothingSelected(p0: AdapterView<*>?) {
-                    /* no op */
+                    *//* no op *//*
                 }
-            }
+            }*/
     }
 
     // Update the values displayed in the bottom sheet. Reset detector.
@@ -264,6 +291,7 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                         }
 
                         detectObjects(image)
+                        frameNum+=1
                     }
                 }
 
@@ -316,6 +344,57 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                 imageHeight,
                 imageWidth
             )
+
+
+            if (frameNum % FRAME_DROP_TTS == 0 && results.isNotEmpty()) {
+                val screenWidth = fragmentCameraBinding.overlay.width
+                val screenHeight = fragmentCameraBinding.overlay.height
+
+                val scaleFactor = max(screenWidth * 1f / imageWidth, screenHeight * 1f / imageHeight)
+
+                //detect if door is in frame
+                val doorDetected = results.any { it.category.label == "Door" }
+                // check if door is within middle of the frame
+                val doorBoundingBox = results.find { it.category.label == "Door" }?.boundingBox
+                val doorX = (doorBoundingBox?.left  ?: 0f)* scaleFactor
+                val doorY = (doorBoundingBox?.top  ?: 0f)* scaleFactor
+                // get screen width
+
+
+                if (doorDetected){
+                    if (doorX < screenWidth * 0.25) {
+                        tts?.speak("Door is on the left", TextToSpeech.QUEUE_FLUSH, null, null)
+                    } else if (doorX > screenWidth * 0.75) {
+                        tts?.speak("Door is on the right", TextToSpeech.QUEUE_FLUSH, null, null)
+                    } else if (doorX > screenWidth * 0.25 && doorX < screenWidth * 0.75) {
+
+                        val obstacleDetected = results.any { it.category.label == "Table" || it.category.label == "Chair" || it.category.label == "Desk" }
+                        val obstacleBoundingBox = results.find { it.category.label == "Table" || it.category.label == "Chair" || it.category.label == "Desk" }?.boundingBox
+                        val obstacleX = (obstacleBoundingBox?.left ?: 0f) * scaleFactor
+
+                        if (obstacleDetected && IOU(doorBoundingBox, obstacleBoundingBox) > 0.5) {
+                            if (obstacleX < screenWidth * 0.25) {
+                                tts?.speak("Obstacle is on the left, Please Turn Right", TextToSpeech.QUEUE_FLUSH, null, null)
+                            } else if (obstacleX > screenWidth * 0.75) {
+                                tts?.speak("Obstacle is on the right, Please Turn Left", TextToSpeech.QUEUE_FLUSH, null, null)
+                            } else if (obstacleX > screenWidth * 0.25 && obstacleX < screenWidth * 0.75) {
+                                tts?.speak("Obstacle is in the middle, Go left or Right", TextToSpeech.QUEUE_FLUSH, null, null)
+                            }
+                        }else{
+                            tts?.speak("Door is in the middle, Please Go Ahead", TextToSpeech.QUEUE_FLUSH, null, null)
+                        }
+                    }
+                }else{
+                    tts?.speak("No Door Detected, Please Turn Left or Right", TextToSpeech.QUEUE_FLUSH, null, null)
+                }
+
+
+
+
+            }
+
+
+
 
             // Force a redraw
             fragmentCameraBinding.overlay.invalidate()

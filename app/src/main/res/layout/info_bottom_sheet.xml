@@ -15,6 +15,7 @@
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/bottom_sheet_layout"
     android:layout_width="match_parent"
     android:layout_gravity="center_horizontal"
@@ -36,13 +37,15 @@
         <RelativeLayout
             android:layout_height="wrap_content"
             android:layout_width="match_parent">
+
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
+                android:layout_centerInParent="true"
+                android:backgroundTint="#B40000"
+                android:contentDescription="@string/alt_bottom_sheet_chevron"
                 android:src="@drawable/icn_chevron_up"
-                android:contentDescription="@string/alt_bottom_sheet_chevron" />
+                android:tint="#1A9564" />
         </RelativeLayout>
 
         <!-- Inference time row -->
@@ -246,28 +249,31 @@
         </RelativeLayout>
 
         <!-- Model selection row -->
-        <RelativeLayout
+     <!--   <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/bottom_sheet_default_row_margin">
+            android:layout_marginTop="@dimen/bottom_sheet_default_row_margin"
+            android:visibility="gone"
+            android:id="@+id/model_container"
+            tools:visibility="gone">
 
             <TextView
-                android:text="@string/label_models"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="@dimen/bottom_sheet_text_size"
-                android:textColor="@color/bottom_sheet_text_color" />
+                android:text="@string/label_models"
+                android:textColor="@color/bottom_sheet_text_color"
+                android:textSize="@dimen/bottom_sheet_text_size" />
 
             <androidx.appcompat.widget.AppCompatSpinner
                 android:id="@+id/spinner_model"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:entries="@array/models_spinner_titles"
                 android:minWidth="@dimen/bottom_sheet_spinner_model_min_width"
                 android:spinnerMode="dropdown"
-                android:theme="@style/BottomSheetSpinnerItemStyle"
-                android:layout_alignParentRight="true"
-                android:entries="@array/models_spinner_titles"/>
+                android:theme="@style/BottomSheetSpinnerItemStyle" />
 
-        </RelativeLayout>
+        </RelativeLayout>-->
     </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.core.widget.NestedScrollView>

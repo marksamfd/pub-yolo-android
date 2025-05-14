@@ -45,6 +45,15 @@ public class PostProcessUtils {
         return Math.max(0, right - left) * Math.max(0, bottom - top);
     }
 
+    public static float IOU( RectF a , RectF b){
+        // Calculate the area of both bounding boxes
+        float areaA = a.width() * a.height();
+        float areaB = b.width() * b.height();
+        float interArea = intersectionArea(a, b);
+        float unionArea = areaA + areaB - interArea;
+        return  interArea/ unionArea;
+    }
+
     // Non-Maximum Suppression (NMS)
     private static void nmsSortedBboxes(ArrayList<DetectedObject> objects, ArrayList<Integer> picked, float nmsThreshold) {
         picked.clear();

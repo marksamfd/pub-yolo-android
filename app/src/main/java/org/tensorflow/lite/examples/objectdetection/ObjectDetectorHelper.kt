@@ -32,11 +32,11 @@ import org.tensorflow.lite.task.vision.detector.ObjectDetector.ObjectDetectorOpt
 
 
 class ObjectDetectorHelper(
-  var threshold: Float = 0.5f,
-  var numThreads: Int = 2,
-  var maxResults: Int = 3,
-  var currentDelegate: Int = 0,
-  var currentModel: Int = 0,
+  var threshold: Float = 0.3f,
+  var numThreads: Int = 4,
+  var maxResults: Int = 4,
+  var currentDelegate: Int = DELEGATE_GPU,
+  var currentModel: Int = MODEL_YOLO,
   val context: Context,
   val objectDetectorListener: DetectorListener?
 ) {

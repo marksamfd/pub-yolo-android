@@ -18,6 +18,7 @@ package org.tensorflow.lite.examples.objectdetection
 
 import android.os.Build
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import androidx.appcompat.app.AppCompatActivity
 import org.tensorflow.lite.examples.objectdetection.databinding.ActivityMainBinding
 
@@ -28,11 +29,14 @@ import org.tensorflow.lite.examples.objectdetection.databinding.ActivityMainBind
 class MainActivity : AppCompatActivity() {
 
     private lateinit var activityMainBinding: ActivityMainBinding
+    private var tts: TextToSpeech? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activityMainBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(activityMainBinding.root)
+
     }
 
     override fun onBackPressed() {
